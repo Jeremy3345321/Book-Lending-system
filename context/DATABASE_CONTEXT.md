@@ -1,8 +1,8 @@
 # Database Context
 
-The database should support the core lending workflow and provide a reliable record of borrowing activity.
+The database supports the core lending workflow using XAMPP with MySQL.
 
-## Suggested Tables
+## Current Tables
 
 - books
   - id
@@ -12,14 +12,7 @@ The database should support the core lending workflow and provide a reliable rec
   - availability_status
   - created_at
 
-- students
-  - id
-  - full_name
-  - email
-  - phone
-  - created_at
-
-- borrow_records
+- lending_records
   - id
   - book_id
   - student_id
@@ -28,14 +21,14 @@ The database should support the core lending workflow and provide a reliable rec
   - returned_at
   - status
 
-
 ## Relationships
 
-- One book can appear in many borrow records over time.
-- One student can have many borrow records.
+- One book can appear in many lending records over time.
+- A lending record references a student through the student_id field only.
 
 ## Persistence Notes
 
-- The database should preserve historical lending records even after a book is returned.
-- Availability should be derived from the latest borrow/return state where possible.
+- The database preserves historical lending records even after a book is returned.
+- Book availability is stored as an availability_status field and can be updated as loans change.
 - Date and status fields should be populated consistently to support overdue logic.
+- The repository layer uses the XAMPP MySQL connection configured locally via PHP.

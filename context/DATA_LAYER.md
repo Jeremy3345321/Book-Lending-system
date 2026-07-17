@@ -1,25 +1,24 @@
 # Data Layer
 
-The data layer should model the core entities involved in book lending.
+The data layer models the core entities involved in book lending using a MySQL-backed persistence layer on XAMPP.
 
 ## Core Entities
 
-- Book: represents a physical or digital library item.
-- Student: represents a school library user who can borrow books.
-- BorrowRecord: tracks a loan transaction between a student and a book.
-- ReturnRecord: tracks the return of a borrowed book.
-- Fine: optional entity for overdue penalties or late return handling.
+- Book: represents a library item with title, author, ISBN, and availability.
+- LendingRecord: tracks a borrowing transaction between a book and a student identifier.
+- Student: not modeled as a separate entity in the domain; it is represented by a simple student_id field on the lending record.
 
 ## Data Responsibilities
 
-- Store book metadata such as title, author, ISBN, and availability.
-- Store student information such as name, contact details, and account status.
-- Maintain lending history through borrow and return records.
-- Ensure the current availability state of each book is accurate.
+- Store book metadata such as title, author, ISBN, and availability status.
+- Store lending history through borrowing and return records.
+- Preserve the current and historical state of each loan.
+- Support overdue calculations by comparing the current date with the due date.
 
 ## Notes
 
 The domain model should make it easy to answer common questions such as:
 - Which books are currently available?
-- Which students currently have books on loan?
+- Which books are currently on loan?
 - Which loans are overdue?
+- Which student IDs are associated with a borrowing record?
