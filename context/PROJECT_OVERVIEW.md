@@ -22,6 +22,18 @@ The system helps the school library track books, students, lending activity, and
 - Return workflow
 - Overdue tracking
 
+## What Needs to Be Done
+
+- Implement the core domain models for books, students, and lending records.
+- Create the database schema and persistence layer for books, borrowers, and transactions.
+- Finish the book management service logic for adding, updating, and listing books.
+- Implement borrowing and returning workflows with availability checks.
+- Add overdue calculation and status tracking for late returns.
+- Write automated tests for core business rules and edge cases.
+- Build a simple user interface or API layer for librarians to manage the system.
+- Add authentication and authorization for admin and library staff roles.
+
 ## Tech Stack
 
-- XAMPP and php: Local database
+- XAMPP with PHP and MySQL for local database storage
+- Book data is persisted in a MySQL database through the repository layer

@@ -3,103 +3,108 @@
 namespace App\Data;
 
 use App\Domain\Book;
+use PDO;
 
 class BookRepository
 {
-    private string $storagePath;
+    private PDO $pdo;
 
-    public function __construct(string $storagePath)
+    public function __construct(?PDO $pdo = null)
     {
-        $this->storagePath = $storagePath;
+        if ($pdo === null) {
+            $this->pdo = new PDO('mysql:host=127.0.0.1;port=3306;dbname=book_lending;charset=utf8mb4', 'root', '');
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        } else {
+            $this->pdo = $pdo;
+        }
     }
 
     public function create(Book $book): Book
     {
-        $books = $this->loadBooks();
-        $book->setAvailable(true);
         $bookId = $book->getId();
-
         if ($bookId === null || $bookId === '') {
-            $bookId = $this->generateId();
+            $bookId = 'book-' . uniqid();
         }
 
-        $bookData = $book->toArray();
-        $bookData['id'] = $bookId;
-        $books[$bookId] = $bookData;
-        $this->saveBooks($books);
+        $statement = $this->pdo->prepare(
+            'INSERT INTO books (id, title, author, isbn, availability_status, created_at) VALUES (:id, :title, :author, :isbn, :availability_status, :created_at)'
+        );
 
-        return Book::fromArray($bookData);
+        $statement->execute([
+            ':id' => $bookId,
+            ':title' => $book->getTitle(),
+            ':author' => $book->getAuthor(),
+            ':isbn' => $book->getIsbn(),
+            ':availability_status' => $book->isAvailable() ? 'available' : 'unavailable',
+            ':created_at' => (new \DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
+        ]);
+
+        return $this->findById($bookId) ?? $book;
     }
 
     public function update(Book $book): Book
     {
-        $books = $this->loadBooks();
         $bookId = $book->getId();
-
-        if ($bookId === null || !isset($books[$bookId])) {
+        if ($bookId === null || $bookId === '') {
             throw new \InvalidArgumentException('Book not found');
         }
 
-        $books[$bookId] = $book->toArray();
-        $this->saveBooks($books);
+        $statement = $this->pdo->prepare(
+            'UPDATE books SET title = :title, author = :author, isbn = :isbn, availability_status = :availability_status WHERE id = :id'
+        );
 
-        return Book::fromArray($books[$bookId]);
+        $statement->execute([
+            ':title' => $book->getTitle(),
+            ':author' => $book->getAuthor(),
+            ':isbn' => $book->getIsbn(),
+            ':availability_status' => $book->isAvailable() ? 'available' : 'unavailable',
+            ':id' => $bookId,
+        ]);
+
+        if ($statement->rowCount() === 0) {
+            throw new \InvalidArgumentException('Book not found');
+        }
+
+        return $this->findById($bookId) ?? $book;
     }
 
     public function delete(string $id): void
     {
-        $books = $this->loadBooks();
-        unset($books[$id]);
-        $this->saveBooks($books);
+        $statement = $this->pdo->prepare('DELETE FROM books WHERE id = :id');
+        $statement->execute([':id' => $id]);
     }
 
     public function findById(string $id): ?Book
     {
-        $books = $this->loadBooks();
-        if (!isset($books[$id])) {
+        $statement = $this->pdo->prepare('SELECT * FROM books WHERE id = :id');
+        $statement->execute([':id' => $id]);
+        $row = $statement->fetch();
+
+        if ($row === false) {
             return null;
         }
 
-        return Book::fromArray($books[$id]);
+        return Book::fromArray([
+            'id' => $row['id'],
+            'title' => $row['title'],
+            'author' => $row['author'],
+            'isbn' => $row['isbn'],
+            'available' => $row['availability_status'] === 'available',
+        ]);
     }
 
     public function findAll(): array
     {
-        $books = $this->loadBooks();
-        return array_map(static fn(array $data): Book => Book::fromArray($data), array_values($books));
-    }
+        $statement = $this->pdo->query('SELECT * FROM books ORDER BY created_at ASC');
+        $rows = $statement->fetchAll();
 
-    private function loadBooks(): array
-    {
-        if (!file_exists($this->storagePath)) {
-            return [];
-        }
-
-        $content = file_get_contents($this->storagePath);
-        if ($content === false || trim($content) === '') {
-            return [];
-        }
-
-        $decoded = json_decode($content, true);
-        if (!is_array($decoded)) {
-            return [];
-        }
-
-        return $decoded;
-    }
-
-    private function saveBooks(array $books): void
-    {
-        $directory = dirname($this->storagePath);
-        if (!is_dir($directory)) {
-            mkdir($directory, 0777, true);
-        }
-
-        file_put_contents($this->storagePath, json_encode($books, JSON_PRETTY_PRINT));
-    }
-
-    private function generateId(): string
-    {
-        return 'book-' . uniqid();
+        return array_map(static fn(array $row): Book => Book::fromArray([
+            'id' => $row['id'],
+            'title' => $row['title'],
+            'author' => $row['author'],
+            'isbn' => $row['isbn'],
+            'available' => $row['availability_status'] === 'available',
+        ]), $rows);
     }
 }

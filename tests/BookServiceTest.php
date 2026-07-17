@@ -11,13 +11,12 @@ function assertTrue(bool $condition, string $message): void
     }
 }
 
-$storagePath = sys_get_temp_dir() . '/book_lending_test.json';
-if (file_exists($storagePath)) {
-    unlink($storagePath);
-}
+$pdo = new PDO('mysql:host=127.0.0.1;port=3306;dbname=book_lending;charset=utf8mb4', 'root', '');
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$pdo->exec('DELETE FROM books');
 
-$repository = new BookRepository($storagePath);
-$service = new BookService($repository);
+$repository = new App\Data\BookRepository($pdo);
+$service = new App\Application\BookService($repository);
 
 $book = $service->createBook('Clean Code', 'Robert Martin', '9780132350884');
 assertTrue($book->getId() !== null, 'Expected created book to have an id');
