@@ -12,36 +12,27 @@ The database should support the core lending workflow and provide a reliable rec
   - availability_status
   - created_at
 
-- members
+- students
   - id
   - full_name
   - email
   - phone
-  - membership_status
   - created_at
 
 - borrow_records
   - id
   - book_id
-  - member_id
+  - student_id
   - borrowed_at
   - due_date
   - returned_at
   - status
 
-- fines
-  - id
-  - member_id
-  - amount
-  - reason
-  - status
-  - created_at
 
 ## Relationships
 
 - One book can appear in many borrow records over time.
-- One member can have many borrow records.
-- A fine can be associated with one member.
+- One student can have many borrow records.
 
 ## Persistence Notes
 
